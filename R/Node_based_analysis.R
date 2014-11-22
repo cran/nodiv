@@ -107,33 +107,40 @@ Sister <- function(node, tree)
 
 ####### Functions summarizing nodiv_data on nodes
 
+
 Node_size <- function(nodiv_data, node = NULL)
-# calculates the number of species that descend from a certain node
 {
+  .local <- function(nodiv_data, node)
+  {
+    node <- identify_node(node, nodiv_data)
+    return(sum(nodiv_data$node_species[node - Nspecies(nodiv_data),]))
+  }
   if(!inherits(nodiv_data, "nodiv_data"))
     stop("nodiv_data must be an object of type nodiv_data or nodiv_result")
-
   if(is.null(node))
-    return(sapply(nodenumbers(nodiv_data), function(nod) Node_size(nodiv_data, nod))) else
-     
-  node <- identify_node(node, nodiv_data)
-	return(sum(nodiv_data$node_species[node - Nspecies(nodiv_data),]))
+    node <- nodenumbers(nodiv_data)
+  if(length(node) == 1)
+    return(.local(nodiv_data, node)) else
+      return(sapply(node, function(nod) .local(nodiv_data, nod))) 
 }
 
 
-Node_species <- function(nodiv_data, node)
-  # returns a character vector with names of species that descend from a node
+Node_species <- function(nodiv_data, node, names = TRUE)
 {
   if(!inherits(nodiv_data, "nodiv_data"))
-    stop("nodiv_data must be an object of type nodiv_data")
+    if(!inherits(nodiv_data, "phylo"))
+      stop("nodiv_data must be an object of type nodiv_data or phylo") else
+        return(Node_spec(nodiv_data, node, names))
   
   node <- identify_node(node, nodiv_data)
-  return(colnames(nodiv_data$node_species)[nodiv_data$node_species[node-Nspecies(nodiv_data),] > 0])
+  ret <- which(nodiv_data$node_species[node-Nspecies(nodiv_data),] > 0)
+  if(names)
+    ret <- nodiv_data$species[ret]
+  return(ret)
 }
 
 
 Node_sites <- function(nodiv_data, node)
-# calculates which sites are occupied by at least one member of the node
 {
 	if(!inherits(nodiv_data, "nodiv_data"))
     stop("nodiv_data must be an object of type nodiv_data or nodiv_result")
@@ -143,16 +150,21 @@ Node_sites <- function(nodiv_data, node)
 }
 	
 
+
 Node_occupancy <- function(nodiv_data, node = NULL)
-# calculates the number of sites occupied by at least one member of the node
 {
+  .local <- function(nodiv_data, node)
+  {
+    node <- identify_node(node, nodiv_data)
+    return(length(Node_sites(nodiv_data, node)))
+  }
   if(!inherits(nodiv_data, "nodiv_data"))
     stop("nodiv_data must be an object of type nodiv_data or nodiv_result")
   if(is.null(node))
-    return(sapply(nodenumbers(nodiv_data), function(nod) Node_occupancy(nodiv_data, nod))) 
-
-  node <- identify_node(node, nodiv_data)
-  return(length(Node_sites(nodiv_data, node)))
+    node <- nodenumbers(nodiv_data)
+  if(length(node) == 1)
+    return(.local(nodiv_data, node)) else
+      return(sapply(node, function(nod) .local(nodiv_data, nod))) 
 }
 
 

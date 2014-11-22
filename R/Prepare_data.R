@@ -20,6 +20,7 @@ nodiv_data <- function(phylo, commatrix, coords, proj4string_in = CRS(as.charact
   nodiv_dat$phylo <- dat$phy
   nodiv_dat$comm <- dat$comm
   if(!(is.data.frame(nodiv_dat$comm) & nrow(nodiv_dat$comm) > 1)) stop("The tip labels in the phylogeny do not match the names in the community matrix")
+  #nodiv_dat$comm <- nodiv_dat$comm[,match(nodiv_dat$phylo$tip.label, colnames(nodiv_dat$comm))]
   
   nodiv_dat$coords <- dist_dat$coords[match(rownames(nodiv_dat$comm), dist_dat$coords$sites),]
   nodiv_dat$hcom <- matrix2sample(nodiv_dat$comm)
@@ -28,6 +29,7 @@ nodiv_data <- function(phylo, commatrix, coords, proj4string_in = CRS(as.charact
   
   cat("Calculating which species descend from each node\n")
   nodiv_dat$node_species <- Create_node_by_species_matrix(nodiv_dat$phylo)
+  nodiv_dat$species <- colnames(nodiv_dat$comm)
   
   class(nodiv_dat) <- c("nodiv_data","distrib_data")
   return(nodiv_dat)
@@ -162,13 +164,13 @@ Create_node_by_species_matrix = function(tree)
   # create a matrix with 0s and 1s indicating which species descend from each node
   nodespecies <- matrix(0, nrow = Nnode(tree), ncol = Ntip(tree))
   colnames(nodespecies) <- tree$tip.label
-  rownames(nodespecies) <- 1:Nnode(tree) + Ntip(tree)
+  rownames(nodespecies) <- nodenumbers(tree)
   
   if(Nnode(tree) > 100)
     pb <- txtProgressBar(min = 1, max = Nnode(tree), style = 3)
   for ( i in 1:Nnode(tree))
   {
-    nodespecies[i,which(colnames(nodespecies) %in% Node_spec(nodenumbers(tree)[i], tree))] <- 1
+    nodespecies[i,Node_spec(nodenumbers(tree)[i], tree, names = FALSE)] <- 1
     if(Nnode(tree) > 100)
       setTxtProgressBar(pb, i)
   }
@@ -176,18 +178,28 @@ Create_node_by_species_matrix = function(tree)
   return(nodespecies)
 }
 
-
-Node_spec <- function(node, tree)
-  # returns a character vector with names of species that descend from a node
+Node_spec <- function(tree, node, names = TRUE)
 {
-  # node : the internal (ape) number of the node
+  .local <- function(tree, node)
+  {
+    if(node < Ntip(tree))
+      return(node)
+    ret <- lapply(Descendants(node, tree), .local, tree = tree)
+    do.call(c, ret)
+  }
+  
+  if(inherits(tree, "nodiv_data"))
+    tree <- tree$phylo
   if(!inherits(tree, "phylo"))
-    stop("tree must be an object of type phylo")
+    stop("tree must be an object of type phylo or nodiv_data")
   
-  if(!node %in% nodenumbers(tree))
-    stop("not a valid node number")
+  node <- identify_node(node, tree)
+  ret <- .local(tree, node)
   
-  nodetree <- extract.clade(tree, node)
-  return(nodetree$tip.label)
+  if(names)
+    ret <- tree$tip.label[ret]
+  
+  ret
 }
+
 
