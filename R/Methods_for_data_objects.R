@@ -1,17 +1,17 @@
 
 
-Nspecies <- function(x)
+Nspecies <- function(distrib_data)
 {
-  if (!inherits(x, "distrib_data")) 
+  if (!inherits(distrib_data, "distrib_data")) 
     stop("object is not of class \"distrib_data\"")
-  length(x$species)
+  length(distrib_data$species)
 }
 
-Nsites<- function(x)
+Nsites<- function(distrib_data)
 {
-  if (!inherits(x, "distrib_data")) 
+  if (!inherits(distrib_data, "distrib_data")) 
     stop("object is not of class \"distrib_data\"")
-  length(x$coords)
+  length(distrib_data$coords)
 }
 
 print.distrib_data <- function(x, printlen = 4, ...)
@@ -35,7 +35,7 @@ print.nodiv_data <- function(x, printlen = 4, ...)
 summary.distrib_data <- function(object, ...)
 {
   richness <- if(object$type == "grid")
-    SpatialPixelsDataFrame(SpatialPoints(object$coords), data.frame(richness = rowSums(object$comm))) else
+    suppressWarnings(SpatialPixelsDataFrame(SpatialPoints(object$coords), data.frame(richness = rowSums(object$comm)))) else
     SpatialPointsDataFrame(SpatialPoints(object$coords), data.frame(richness = rowSums(object$comm))) 
       
   occupancy <- colSums(object$comm)
@@ -215,11 +215,18 @@ subsample.nodiv_data <- function(x, sites = NULL, species = NULL, node = NULL, .
 
 
 
-richness <- function(x)
+richness <- function(distrib_data)
 {  
-  if(!inherits(x, "distrib_data"))
-    stop("x must be an object of type distrib_data")
-  return(summary(x)$richness$richness)
+  if(!inherits(distrib_data, "distrib_data"))
+    stop("distrib_data must be an object of type distrib_data, nodiv_data or nodiv_result")
+  return(summary(distrib_data)$richness$richness)
+}
+
+occupancy <- function(distrib_data)
+{  
+  if(!inherits(distrib_data, "distrib_data"))
+    stop("distrib_data must be an object of type distrib_data, nodiv_data or nodiv_result")
+  return(summary(distrib_data)$occupancy)
 }
 
 plot_sitestat <- function(distrib_data, x, ...)
@@ -232,5 +239,45 @@ plot_sitestat <- function(distrib_data, x, ...)
   if(distrib_data$type == "grid")
     plot_grid(x, distrib_data$coords, shape = shape, ...) else
       plot_points(x, distrib_data$coords, shape = shape, ...)
+}
+
+plot_species <- function(distrib_data, species, col = c("white", "red"), ...)
+{
+  species <- identify_species(species, distrib_data)
+  if (length(species) > 1)
+  {
+    warning("species had length > 1; only the first species is plotted")
+  }
+  if(is.null(list(...)$main)) main = distrib_data$species[species]
+  plot_sitestat(distrib_data, distrib_data$comm[,species], col = col, main = main, ...)
+}
+
+
+identify_species <- function(species, distrib_data, as.name = FALSE)
+{
+  if(!inherits(distrib_data, "distrib_data"))
+    stop("distrib_data must be an object of type distrib_data, nodiv_data or nodiv_result")
+  
+  if(!is.vector(species)) 
+    stop("node must be either numeric or character")
+  
+  if(is.character(species))
+  {
+    specs <- match(species, distrib_data$species)
+    omits <- which(is.na(specs))
+    specs <- specs[!is.na(specs)]
+    if(length(specs) == 0)
+      stop("Species not found in the dataset") else
+        warning(paste("These species were excluded as they were not found:", paste(species[omits], sep = "\t")))
+  } else specs <- species
+    
+  diagnost <- which(specs > Nspecies(distrib_data) | specs < 0)
+  if(length(diagnost) > 0)
+    stop(paste("numbers", paste(diagnost, sep = ", "), "are too high and did not match the community matrix"))
+  
+  if(as.name)
+    specs <- distrib_data$species[specs]
+  
+  specs
 }
 

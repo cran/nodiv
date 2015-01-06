@@ -47,8 +47,10 @@ plot_grid <- function(x, coords, col = rev(terrain.colors(64)), shape = NULL, sh
   
   if(is.null(shape)) plot(rast, zlim = zlim, col = col, ...) else
   {
+    if(inherits(shape, "SpatialPolygonsDataFrame"))
+      border <- shapefill else border <- NULL
     if(zoom_to_points)
-      plot(shape, col = shapefill,  xlim = bbox(coords)[1,], ylim = bbox(coords)[2,], ...) else plot(shape, col = shapefill, ...)
+      plot(shape, col = shapefill, border = border, xlim = bbox(coords)[1,], ylim = bbox(coords)[2,], ...) else plot(shape, col = shapefill, border = border, ...)
     plot(rast, add = T, zlim = zlim, col = col)
   }
   invisible(rast)
@@ -85,6 +87,7 @@ plot_points <- function(x, coords, col = rev(terrain.colors(64)), shape = NULL, 
   #split.screen( rbind(c(0, .8,0,1), c(.8,1,0,1)))
   #screen(1)
   oldpar <- par()
+  #par(plt = c(0,0.8,0,1))
   par(mar = c(5,4,4,6) + 0.1)
   
   plotcol <- create.cols(x, col, zlim = zlim)
@@ -93,7 +96,8 @@ plot_points <- function(x, coords, col = rev(terrain.colors(64)), shape = NULL, 
     bg <- plotcol
     plotcol <- 1
   }
-    
+  coords <- coords[order(x),]
+  plotcol <- plotcol[order(x)]  
   
   if(is.null(shape)) plot(coords, col = plotcol, pch = pch, bg = bg, ...) else
   {
