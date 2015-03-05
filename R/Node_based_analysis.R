@@ -36,11 +36,15 @@ identify_node <- function(node, tree)
   {
     if(is.null(tree$node.label))
       stop("node could not be matched, as the phylogeny does not have node labels")
-    node <- match(node, tree$node.label)
+    node <- match(node, tree$node.label) + Ntip(tree)
     if(is.na(node))
       stop("the node could not be matched to the node labels")
   }
   
+  if(node %in% 1:Ntip(tree)){
+    node <- node + Ntip(tree)  #It is an open question whether this should be here, or whether it may just lead to errors.
+    warning(paste("The node number",node,"did not exist. Adding Ntip(tree) to create a usable number"))
+  }
   if(!node %in% nodenumbers(tree))
     stop("Undefined node")
 
@@ -77,6 +81,7 @@ Descendants <- function(node, tree)
     tree <- tree$phylo
   if(!inherits(tree, "phylo"))
     stop("tree must be an object of type phylo or nodiv_data")
+  node <- identify_node(node, tree)
   return(tree$edge[ tree$edge[,1] == node , 2])
 }
   
@@ -87,9 +92,12 @@ Parent <- function(node, tree)
     tree <- tree$phylo
   if(!inherits(tree, "phylo"))
     stop("tree must be an object of type phylo or nodiv_data")  
-  if (node == Ntip(tree) +1 )   # If the node is the basal node it does not have a parent node
+  suppressWarnings(node_local <- identify_species(node, tree))
+  if(is.na(node_local)) 
+    node_local <- identify_node(node, tree)
+  if (node_local == basal_node(tree))   # If the node is the basal node it does not have a parent node
     return (NA)
-  return(tree$edge[ tree$edge[,2] == node , 1])
+  return(tree$edge[ tree$edge[,2] == node_local , 1])
 }
 
 Sister <- function(node, tree) 
@@ -98,7 +106,10 @@ Sister <- function(node, tree)
     tree <- tree$phylo
   if(!inherits(tree, "phylo"))
     stop("tree must be an object of type phylo or nodiv_data")
-  if (node == Ntip(tree) +1 )   # If the node is the basal node it does not have a sister node
+  suppressWarnings(node <- identify_species(node, tree))
+  if(is.na(node)) 
+    node <- identify_node(node, tree)
+  if (node == basal_node(tree) )   # If the node is the basal node it does not have a sister node
     return (NA)
   sisters = Descendants(Parent(node, tree), tree)
   return(sisters[! sisters == node])

@@ -1,12 +1,12 @@
-7945833c40b43a2cca114ddd7ed872ee *DESCRIPTION
+9b767e9d3dce84978e01f46499510b90 *DESCRIPTION
 b7b3c60de7d77dfa7ca26f9be5c696ad *NAMESPACE
 67a8d645991fae82f6256274387661e2 *R/General_figure_functions.R
-8c7ddb4834c9bcd2ec158b2dd2446d77 *R/Methods_for_data_objects.R
+18011fc45759342ecee89b9f50651cf6 *R/Methods_for_data_objects.R
 4ebab5880d9f65d73081d06e318873f3 *R/Methods_for_result_objects.R
 68af0f4d2c2b4774c2ec517d13462bf3 *R/Node_analysis_function.R
-548343438fa71336f527ab243f7ed26a *R/Node_based_analysis.R
+cee61872aa1d28f3535c5f6915abe24a *R/Node_based_analysis.R
 0eea44b6309e0aba4f6436e70ffd47a9 *R/Nodesig_function.R
-d6e9dc3c4d3733e5845a7676f37aa44b *R/Prepare_data.R
+5c312a8d207ef6c013c0d562792adda0 *R/Prepare_data.R
 e15302955eca0a9d318728cf91e7780c *R/Prepare_result_object.R
 d57bde9731b55b95cd5afcb9123abdbc *data/coquettes.rda
 d66360fad13e4ad7f2bf0e58fc4b06ab *inst/CITATION
@@ -17,8 +17,8 @@ d9ddacc603767d11cc0f521918425a91 *man/Nspecies.Rd
 ca9e8803c719c2e5d1adb336b49be5cc *man/add_shape.Rd
 28babecc3ffb6dd84014ec28a9f04ae5 *man/basal_node.Rd
 cf40f9194216f290ec28ce67a05f7e72 *man/coquettes.Rd
-7b956e1dddc190d5562e7b3107c1649c *man/distrib_data.Rd
-4b74085c07474edad526048113422953 *man/nodiv-package.Rd
+0be72e8f20b62d814bce75789e433772 *man/distrib_data.Rd
+166833678a7d76a85b01e27994127524 *man/nodiv-package.Rd
 80cddee917420ff97453516a3ba14ff9 *man/plotSOS.Rd
 27e29ebbf1b518c5870c52edea63d5d0 *man/plot_nodes_phylo.Rd
 a6b9dac76bc0fe382e300098d4e01b9b *man/plot_points.Rd
