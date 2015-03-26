@@ -12,8 +12,8 @@ print.nodiv_result <- function(x, printlen = 4, ...)
   cat(paste("Result of nodiv analysis on", x$type,"data\n"))
   cat(paste("Repeats:",x$repeats,"\n"))
   cat(paste("Null model:", x$method,"\n\n"))
-  cat(paste("Species names (n = ", length(x$species), "):\n", sep = ""))
-  cat(paste("\t", paste(x$species[1:printlen], collapse = ", "),", ...\n\n", sep = ""))
+  cat(paste("Species names (n = ", Nspecies(x), "):\n", sep = ""))
+  cat(paste("\t", paste(species(x)[1:printlen], collapse = ", "),", ...\n\n", sep = ""))
   cat(paste("Site names (n = ", nrow(x$coords),"):\n", sep = ""))
   cat(paste("\t", paste(x$coords$sites[1:printlen], collapse = ", "),", ...\n\n", sep = ""))
   cat(paste("GND and SOS calculated for", sum(!is.na(x$GND)), "nodes\n"))
@@ -61,7 +61,7 @@ plot.nodiv_result <- function(x, label = nodenumbers(x), zlim = 0:1, ...)
   plot_nodes_phylo(x$GND, tree = x$phylo, label = label, main = "",  zlim = zlim, show.legend = TRUE,...)
 }
 
-plotSOS <- function(nodiv_result, node, col = cm.colors(64), zlim, ...)
+plotSOS <- function(nodiv_result, node, zlim, ...)
 {
   sos <- SOS(nodiv_result, node)
   if(missing(zlim)) 
@@ -69,7 +69,7 @@ plotSOS <- function(nodiv_result, node, col = cm.colors(64), zlim, ...)
     maxabs <- max(abs(sos), na.rm = T)
     zlim <- c(-maxabs, maxabs)
   }
-  plot_sitestat(nodiv_result, sos, col = col, zlim = zlim, ...)
+  plot_sitestat(nodiv_result, sos, zlim = zlim, ...)
 }
 
 SOS <- function(nodiv_result, node)

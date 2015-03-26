@@ -1,10 +1,48 @@
 
 
+head.distrib_data <- function(x, ...) print.distrib_data(x, ...)
+head.nodiv_data <- function(x, ...) print.nodiv_data(x, ...)
+head.nodiv_result <- function(x, ...) print.nodiv_result(x, ...)
+
+occurrences <- function(distrib_data, species, value = c("index", "names", "logical", "raw")){
+  value = match.arg(value)
+  if (!inherits(distrib_data, "distrib_data")) 
+    stop("object is not of class \"distrib_data\"")
+  species <- identify_species(species, distrib_data)
+  
+  ret <- distrib_data$comm[,species]
+  if(value == "logical")
+    ret <- (ret > 0)
+  if(value == "index" | value == "names")
+    ret <- which(ret > 0)
+  if(value == "names")
+    ret <- sites(distrib_data)[ret]
+  
+  ret  
+}
+
+assemblage <- function(distrib_data, site, value = c("index", "names", "logical", "raw")){
+  value = match.arg(value)
+  if (!inherits(distrib_data, "distrib_data")) 
+    stop("object is not of class \"distrib_data\"")
+  site <- identify_sites(site, distrib_data)
+  
+  ret <- distrib_data$comm[site, ]
+  if(value == "logical")
+    ret <- (ret > 0)
+  if(value == "index" | value == "names")
+    ret <- which(ret > 0)
+  if(value == "names")
+    ret <- species(distrib_data)[ret]
+  
+  ret   
+}
+
 Nspecies <- function(distrib_data)
 {
   if (!inherits(distrib_data, "distrib_data")) 
     stop("object is not of class \"distrib_data\"")
-  length(distrib_data$species)
+  length(species(distrib_data))
 }
 
 Nsites<- function(distrib_data)
@@ -18,41 +56,44 @@ print.distrib_data <- function(x, printlen = 4, ...)
 {
   cat(paste("Data object with", x$type," distributions of", Nspecies(x),"species in", Nsites(x),"sites\n\n"))
   cat("Species names:\n")
-  cat(paste("\t", paste(x$species[1:printlen], collapse = ", "),", ...\n", sep = ""))
+  cat(paste("\t", paste(species(x)[1:printlen], collapse = ", "),", ...\n", sep = ""))
   cat("Site names:\n")
-  cat(paste("\t", paste(x$coords$sites[1:printlen], collapse = ", "),", ...\n", sep = ""))
+  cat(paste("\t", paste(sites(x)[1:printlen], collapse = ", "),", ...\n", sep = ""))
 }
 
 print.nodiv_data <- function(x, printlen = 4, ...)
 {
   cat(paste("Data object with", x$type,"distributions and phylogenetic relationships of", Nspecies(x),"species in", Nsites(x),"sites\n\n"))
   cat("Species names:\n")
-  cat(paste("\t", paste(x$species[1:printlen], collapse = ", "),", ...\n", sep = ""))
+  cat(paste("\t", paste(species(x)[1:printlen], collapse = ", "),", ...\n", sep = ""))
   cat("Site names:\n")
-  cat(paste("\t", paste(x$coords$sites[1:printlen], collapse = ", "),", ...\n", sep = ""))
+  cat(paste("\t", paste(sites(x)[1:printlen], collapse = ", "),", ...\n", sep = ""))
 }
+
+identify.distrib_data <- function(x, ...)
+  identify(coordinates(x$coords),  ...)
 
 summary.distrib_data <- function(object, ...)
 {
-  richness <- if(object$type == "grid")
-    suppressWarnings(SpatialPixelsDataFrame(SpatialPoints(object$coords), data.frame(richness = rowSums(object$comm)))) else
-    SpatialPointsDataFrame(SpatialPoints(object$coords), data.frame(richness = rowSums(object$comm))) 
+  if(object$type == "grid")
+    richness <- suppressWarnings(SpatialPixelsDataFrame(SpatialPoints(object$coords), data.frame(richness = apply(object$comm, 1, function(site) sum(site > 0))))) else
+      richness <- SpatialPointsDataFrame(SpatialPoints(object$coords), data.frame(richness = apply(object$comm, 1, function(site) sum(site > 0)))) 
       
-  occupancy <- colSums(object$comm)
-  ret <- list(species = object$species, coords = object$coords, richness = richness, occupancy = occupancy, type = object$type)
+  occupancy <- apply(object$comm, 2, function(site) sum(site > 0))
+  ret <- list(species = species(object), coords = object$coords, richness = richness, occupancy = occupancy, type = object$type)
   class(ret) <- "summary_distrib_data"
   ret
 }
 
 print.summary_distrib_data <- function(x, printlen = 4, ...)
 {
-  cat(paste("Data object with", x$type,"distributions of", length(x$species),"species in", nrow(x$coords),"sites\n\n"))
+  cat(paste("Data object with", x$type,"distributions of", length(x$species),"species in", length(x$coords$sites),"sites\n\n"))
   cat("Species names:\n")
   cat(paste("\t", paste(x$species[1:printlen], collapse = ", "),", ...\n", sep = ""))
   cat("Site names:\n")
   cat(paste("\t", paste(x$coords$sites[1:printlen], collapse = ", "),", ...\n\n", sep = ""))
   cat(paste("Species richness:  min", min(x$richness$richness), "max", max(x$richness$richness), "mean",mean(x$richness$richness),"\n"))
-  cat(paste("Species occupancy:  min", min(x$occupancy, "max", max(x$occupancy), "mean",mean(x$occupancy,"\n"))))
+  cat(paste("Species occupancy:  min", min(x$occupancy, "max", max(x$occupancy), "mean",mean(x$occupancy),"\n")))
 }
 
 summary.nodiv_data <- function(object, ...)
@@ -66,7 +107,7 @@ summary.nodiv_data <- function(object, ...)
 
 print.summary_nodiv_data <- function(x, printlen = 4, ...)
 {
-  cat(paste("Data object with", x$type,"distributions and phylogenetic relationships of", length(x$species) ,"species in", length(x$sites),"sites\n\n"))
+  cat(paste("Data object with", x$type,"distributions and phylogenetic relationships of", length(x$species) ,"species in", length(x$coords$sites),"sites\n\n"))
   cat("Species names:\n")
   cat(paste("\t", paste(x$species[1:printlen], collapse = ", "),", ...\n", sep = ""))
   cat("Site names:\n")
@@ -115,11 +156,13 @@ plot_node <- function(nodiv_data, node = basal_node(nodiv_data), sites = NULL, .
   plot_richness(subsample.distrib_data(nodiv_data, species = Node_species(nodiv_data, node), sites = sites), ...)
 }
 
-plot.nodiv_data <- function(x,  col = rev(heat.colors(64)), ...)
+plot.nodiv_data <- function(x,  ...)
 {
+  oldpar <- par()
   par(mfrow = c(1,2))
-  plot.distrib_data(x, col = col, ...)
+  plot.distrib_data(x, ...)
   plot(x$phylo, show.tip.label = isTRUE(Nspecies(x) < 40), cex = 0.7) #need to specify explicitly which
+
   par(mfrow = c(1,1))
 }
 
@@ -127,10 +170,15 @@ subsample<- function(x, ...) UseMethod("subsample")
 
 subsample.distrib_data <- function(x, sites = NULL, species = NULL, ...)
 {
-  if(!inherits(x, "distrib_data"))
-    stop("Can only subsample objects of types distrib_data or nodiv_data")
-  if(inherits(sites, "SpatialPoints")) sites <- as.character(sites@data)
+  #restorepoint::restore.point("subsample.distrib_data", TRUE)
+  if(is.null(x$species_stats))
+    stop("The distrib_data object is from an earlier version of nodiv. Please run update_object on the object before proceeding")  
+  
+  if(inherits(sites, "SpatialPoints")) sites <- infer_sites(x, sites@data)$site
+  
   keep_sites <- F
+  if(is.null(sites)) sites <- 1:Nsites(x)
+  if(is.logical(sites)) sites <- which(sites)
   if(is.character(sites)) 
   {
     if(length(sites) == 1)
@@ -139,37 +187,36 @@ subsample.distrib_data <- function(x, sites = NULL, species = NULL, ...)
     } else 
       sites <- match(sites, x$coords$sites)
   }  
-  if(is.null(sites) | keep_sites) sites <- 1:Nsites(x)
+  if(keep_sites) sites <- 1:Nsites(x)
   
   keep_species <- F
+  if(is.null(species)) species <- 1:Nspecies(x)
+  if(is.logical(species)) species <- which(species)
   if(is.character(species))
   {
     if(length(species) == 1)
     {
       if(species == "all") keep_species <- T 
     } else
-    species <- match(species, x$species)
+    species <- match(species, x$species_stats$species)
   }
   
-  if(is.null(species) | keep_species) species <- 1:Nspecies(x)
+  if(keep_species) species <- 1:Nspecies(x)
   
-  ret <- x[c("comm", "type", "coords", "species")]
+  ret <- x[c("comm", "type", "coords", "species_stats")]
   if(!is.null(x$shape)) 
     ret$shape <- x$shape
-  if(!is.null(x$sitestats)) 
-    ret$sitestats <- x$sitestats
-  if(!is.null(x$speciesstats)) 
-    ret$speciesstats <- x$speciesstats
+
   
   ret$comm <- ret$comm[sites, species]
   
-  if(keep_sites) sites_keep <- rep_len(TRUE, nrow(ret$comm)) else sites_keep <- (rowSums(ret$comm, na.rm = T) > 0)
+  if(keep_sites) sites_keep <- rep_len(TRUE, nrow(ret$comm)) else sites_keep <- which(rowSums(ret$comm, na.rm = T) > 0)
   
-  if(keep_species) sites_keep <- rep_len(TRUE, nrow(ret$comm)) else species_keep <- (colSums(ret$comm, na.rm = T) > 0)
+  if(keep_species) species_keep <- rep_len(TRUE, ncol(ret$comm)) else species_keep <- which(colSums(ret$comm, na.rm = T) > 0)
 
   ret$comm <- ret$comm[sites_keep, species_keep]
   
-  ret$species <- colnames(ret$comm)
+  ret$species_stats <- subrow_data.frame(ret$species_stats, species_keep)
   ret$coords <- ret$coords[ret$coords$sites %in% rownames(ret$comm),]
   
   
@@ -179,6 +226,9 @@ subsample.distrib_data <- function(x, sites = NULL, species = NULL, ...)
 
 subsample.nodiv_data <- function(x, sites = NULL, species = NULL, node = NULL, ...)
 {
+  if(is.null(x$species_stats))
+    stop("The nodiv_data object is from an earlier version of nodiv. Please run update_object on the object before proceeding")
+  
   ret_phylo <- x$phylo
   ret_phylo$node.label <- nodenumbers(x)  #this line
   
@@ -194,11 +244,11 @@ subsample.nodiv_data <- function(x, sites = NULL, species = NULL, node = NULL, .
   
   new_phylo <- dat$phy
   old_nodes <- as.numeric(new_phylo$node.label)
-  ret$phylo <- drop.tip(x$phylo, which(! x$species %in% new_phylo$tip.label))  #this line
-  ret$species <- ret$phylo$tip.label
+  ret$phylo <- drop.tip(x$phylo, which(! species(x) %in% new_phylo$tip.label))  #this line
+  ret$species_stats <- subrow_data.frame(x$species_stats, match(ret$phylo$tip.label, x$species_stats$species))
   
-  ret$hcom <- subset(x$hcom, x$hcom$plot %in% ret$coords$sites & x$hcom$id %in% ret$species)
-  ret$node_species <- x$node_species[, colnames(x$node_species) %in% ret$species]
+  ret$hcom <- subset(x$hcom, x$hcom$plot %in% ret$coords$sites & x$hcom$id %in% ret$species_stats$species)
+  ret$node_species <- x$node_species[, colnames(x$node_species) %in% ret$species_stats$species]
   ret$node_species <- ret$node_species[rowSums(ret$node_species) > 0,]
   ret$node_species <- ret$node_species[as.numeric(rownames(ret$node_species)) %in% old_nodes,] # and this line are an ugly hack to make sure the node_species matrix does not get perverted
   if(!is.matrix(ret$node_species)) ret$node_species <- rbind(ret$node_species) #TODO this is a hack for when a node only has tips
@@ -208,7 +258,20 @@ subsample.nodiv_data <- function(x, sites = NULL, species = NULL, node = NULL, .
   return(ret)
 }
 
+sites <- function(distrib_data){
+  if(!inherits(distrib_data, "distrib_data"))
+    stop("distrib_data must be an object of type distrib_data, nodiv_data or nodiv_result")
+  return(distrib_data$coords@data$sites)
+}
 
+
+species <- function(distrib_data){
+  if(!inherits(distrib_data, "distrib_data"))
+    stop("distrib_data must be an object of type distrib_data, nodiv_data or nodiv_result")
+  if(is.null(distrib_data$species_stats))
+    stop("The distrib_data object is from an earlier version of nodiv. Please run update_object on the object before proceeding")
+  return(distrib_data$species_stats$species)
+}
 
 richness <- function(distrib_data)
 {  
@@ -226,32 +289,115 @@ occupancy <- function(distrib_data)
 
 plot_sitestat <- function(distrib_data, x, ...)
 {
-  
   if(!inherits(distrib_data, "distrib_data"))
     stop("distrib_data must be an object of type distrib_data, nodiv_data or nodiv_result")
   
+  if(is.character(x)){
+    if(length(x) == 1)
+      x <- sitestat(distrib_data, x) else
+        if(!length(x) == Nsites(distrib_data))
+          stop(paste("x must be a numeric vector of length", Nsites(distrib_data), "or the name of a site variable in distrib_data"))
+
+  }
+
   if(is.null(distrib_data$shape)) shape <- NULL else shape <- distrib_data$shape
   if(distrib_data$type == "grid")
     plot_grid(x, distrib_data$coords, shape = shape, ...) else
       plot_points(x, distrib_data$coords, shape = shape, ...)
 }
 
-plot_species <- function(distrib_data, species, col = c("white", "red"), ...)
+sitestat <- function(distrib_data, statname = NULL, site = NULL)
+{
+  if(!inherits(distrib_data, "distrib_data"))
+    stop("distrib_data must be an object of type distrib_data, nodiv_data or nodiv_result")
+  
+  if(is.null(site)) 
+    site <- 1:Nsites(distrib_data) else site <- identify_sites(site, distrib_data)
+  
+  sitestatnames <- names(distrib_data$coord@data)
+  
+  if(is.null(statname))
+    return(sitestatnames)
+  
+  if(length(statname) == 1)
+    if(statname == "all")
+      statname <- sitestatnames
+  
+  fitnames <- which(statname %in% sitestatnames)
+  
+  if(length(fitnames) == 0)
+    stop(paste("Sitestat", paste(statname, collapse = ", ") , "not found in distrib_data!\nPotential sitestats are", paste(sitestatnames, collapse = ", ")))
+  if(length(fitnames) < length(statname))
+    warning(paste("Dropping sitestats", paste(statname, collapse = ", ") , "not found in distrib_data"))
+  
+  ret <- distrib_data$coord@data[,sitestatnames %in% statname]
+  if(is.vector(ret)) {
+    names(ret) <- sites(distrib_data)
+    ret <- ret[site]
+  } else ret <- ret[site,]
+  ret
+}
+
+update_object <- function(distrib_data){
+  if(!inherits(distrib_data, "distrib_data"))
+    stop("distrib_data must be an object of type distrib_data, nodiv_data or nodiv_result")
+  
+  if(is.null(distrib_data$species_stats))
+    distrib_data$species_stats <- data.frame(species = colnames(distrib_data$comm), stringsAsFactors = FALSE)
+  if(!is.null(distrib_data$species))
+    distrib_data$species <- NULL
+  
+  distrib_data
+}
+
+species_stat <- function(distrib_data, statname = NULL, specs = NULL)
+{
+  if(!inherits(distrib_data, "distrib_data"))
+    stop("distrib_data must be an object of type distrib_data, nodiv_data or nodiv_result")
+  if(is.null(distrib_data$species_stats))
+    stop("The distrib_data object is from an earlier version of nodiv. Please run update_object on the object before proceeding")
+  
+  if(is.null(specs))
+    specs <- 1:Nspecies(distrib_data) else specs <- identify_species(specs, distrib_data)
+  
+  if(length(specs) == 0 | (length(specs) == 1 & is.na(specs[1])))
+    stop("Species not found in the dataset")
+  
+  species_statnames <- names(distrib_data$species_stats)
+  
+  if(is.null(statname))
+    return(species_statnames)
+  
+  fitnames <- which(statname %in% species_statnames)
+  
+  if(length(fitnames) == 0)
+    stop(paste("Species stat \"", paste(statname, collapse = ", ") , " \" not found in distrib_data!\nPotential species stats are:", paste(species_statnames, collapse = ", ")))
+  if(length(fitnames) < length(statname))
+    warning(paste("Dropping species_stats", paste(statname, collapse = ", ") , "not found in distrib_data"))
+  
+  ret <- distrib_data$species_stats[,species_statnames %in% statname]
+  if(is.vector(ret)){
+    names(ret) <- species(distrib_data)
+    ret <- ret[specs]
+  } else ret <- ret[specs,]
+ret
+}
+
+plot_species <- function(distrib_data, species, col = c("darkgreen", "red"), ...)
 {
   species <- identify_species(species, distrib_data)
   if (length(species) > 1)
   {
     warning("species had length > 1; only the first species is plotted")
   }
-  if(is.null(list(...)$main)) main = distrib_data$species[species]
+  if(is.null(list(...)$main)) main = distrib_data$species_stats$species[species]
   plot_sitestat(distrib_data, distrib_data$comm[,species], col = col, main = main, ...)
 }
-
 
 identify_species <- function(species, distrib_data, as.name = FALSE)
 {
   if(inherits(distrib_data, "distrib_data")){
-    specieslist <- distrib_data$species
+    specieslist <- species(distrib_data)
     speciesnumber <- Nspecies(distrib_data)
   } else if(inherits(distrib_data, "phylo")){
     specieslist <- distrib_data$tip.label
@@ -259,7 +405,7 @@ identify_species <- function(species, distrib_data, as.name = FALSE)
   } else stop("distrib_data must be an object of type ape:::phylo, distrib_data, nodiv_data or nodiv_result")
   
   if(!is.vector(species)) 
-    stop("node must be either numeric or character")
+    stop("species must be either numeric or character")
   
   if(is.character(species))
   {
@@ -272,7 +418,7 @@ identify_species <- function(species, distrib_data, as.name = FALSE)
     }
 
     if(length(omits) > 0){
-      warning(paste("These species were excluded as they were not found:", paste(species[omits], sep = "\t")))
+      warning(paste("These species were excluded as they were not found:", paste(species[omits], collapse = ", ")))
     }
   } else specs <- species
 
@@ -289,5 +435,41 @@ identify_species <- function(species, distrib_data, as.name = FALSE)
     specs <- specieslist[specs]
   
   specs
+}
+
+identify_sites <- function(site, distrib_data, as.name = FALSE)
+{
+  if(!inherits(distrib_data, "distrib_data"))
+    stop("distrib_data must be an object of type  distrib_data, nodiv_data or nodiv_result")
+  
+  if(is.character(site))
+  {
+    sitenames <- site
+    site <- match(site, sites(distrib_data))
+    omits <- which(is.na(site))
+    site <- site[!is.na(site)]
+    if(length(site) == 0){
+      warning("Site names did not match") 
+      return(NA)
+    }
+    
+    if(length(omits) > 0){
+      warning(paste("These sites were excluded as they were not found:", paste(sitenames[omits], collapse = "\t")))
+    }
+  } else site <- site
+  
+  
+  diagnost <- which(site > Nsites(distrib_data) | site < 0)
+  if(length(diagnost) == length(site))
+    return(NA)
+  if(length(diagnost) > 0){
+    warning(paste("numbers", paste(diagnost, sep = ", "), "are too high and did not match the site number"))
+    site <- site[-diagnost]
+  }
+  
+  if(as.name)
+    site <- sites(distrib_data)[site]
+  
+  site
 }
 

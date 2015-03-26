@@ -7,6 +7,8 @@
 ##############INTERNAL FUNCTIONS (NOT TO BE EXPORTED)###############
 
 
+subrow_data.frame <- function(data.frame, index)
+  as.data.frame(lapply(data.frame, function(var) var[index]), stringsAsFactors = FALSE)
 
 Node_comm <- function(nodiv_data, node, names = TRUE)
 # returns a samplelist of sites occupied by at least one member of the node
@@ -75,6 +77,27 @@ nodenumbers <- function(tree)
   return(1:Nnode(tree) + Ntip(tree))
 }
 
+nodes <- function(tree, all = FALSE){
+  if(inherits(tree, "nodiv_data"))
+    tree <- tree$phylo
+  if(!inherits(tree, "phylo"))
+    stop("tree must be of type phylo or nodiv_data")
+  
+  ret <- nodenumbers(tree)
+  names(ret) <- tree$node.label
+  
+  if(!all){
+    if(is.null(tree$node.label)){
+      warning("Object had no node labels - returning all node numbers")
+      return(ret)
+    }
+    ret <- ret[!names(ret) == ""]
+    ret <- ret[order(names(ret))]
+  }
+  return(ret)
+}
+
+
 Descendants <- function(node, tree) 
 {
   if(inherits(tree, "nodiv_data"))
@@ -106,9 +129,10 @@ Sister <- function(node, tree)
     tree <- tree$phylo
   if(!inherits(tree, "phylo"))
     stop("tree must be an object of type phylo or nodiv_data")
-  suppressWarnings(node <- identify_species(node, tree))
-  if(is.na(node)) 
-    node <- identify_node(node, tree)
+  suppressWarnings(nodesp <- identify_species(node, tree))
+  if(!is.na(nodesp))
+    node <- nodesp else
+      node <- identify_node(node, tree)
   if (node == basal_node(tree) )   # If the node is the basal node it does not have a sister node
     return (NA)
   sisters = Descendants(Parent(node, tree), tree)
@@ -145,9 +169,10 @@ Node_species <- function(nodiv_data, node, names = TRUE)
         return(Node_spec(nodiv_data, node, names))
   
   node <- identify_node(node, nodiv_data)
+
   ret <- which(nodiv_data$node_species[node-Nspecies(nodiv_data),] > 0)
   if(names)
-    ret <- nodiv_data$species[ret]
+    ret <- species(nodiv_data)[ret]
   return(ret)
 }
 

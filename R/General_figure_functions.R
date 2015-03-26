@@ -5,19 +5,8 @@
 ##########################################################
 # Here comes a list of functions to use for the analysis. These definitions should all be loaded into R
 
-create.cols <- function(vec, col , zlim)
-{
-  if(missing(col)) 
-    if(min(col) < 0) col <- cm.colors(64) else col <- rev(heat.colors(64))
-  if(min(vec, na.rm = TRUE) == 0 & identical(vec, floor(vec))) col <- c("grey", col)
-  if(missing(zlim)) zlim <- c(min(vec,na.rm = T),max(vec,na.rm = T))
-  vec = vec - zlim[1]
-  vec = floor(vec * (length(col)-1)/(zlim[2]- zlim[1]))+1
-  return(col[vec])
-}
 
-
-plot_grid <- function(x, coords, col = rev(terrain.colors(64)), shape = NULL, shapefill = "grey", zlim = NULL, zoom_to_points = FALSE, ...)
+plot_grid <- function(x, coords, col, shape = NULL, shapefill = "grey", zlim = NULL, zoom_to_points = FALSE, ...)
 {
   if(inherits(x, "SpatialPixelsDataFrame"))
     rast <- raster(x) else
@@ -41,9 +30,24 @@ plot_grid <- function(x, coords, col = rev(terrain.colors(64)), shape = NULL, sh
         } else stop("Undefined arguments")
       }
   
+  if(missing(col)){
+    if(is.character(x)) x <- as.factor(x)
+    if(is.factor(x))
+      coltype <- "individual" else coltype <- "auto"      
+    col <- choose.colors(getValues(rast), zlim, coltype = coltype)
+    zlim <- attr(col, "zlim")
+  }
+  
+  if(is.character(col))
+    if(length(col) == 1)
+      if(!substr(col, 1, 1) == "#")
+        if(!col %in% colors())
+          col <- custom_palette(col)
   
   if(is.null(zlim)) zlim <- c(min(getValues(rast),na.rm = T),max(getValues(rast),na.rm = T))
-  if(min(zlim) == 0 & identical(getValues(rast), floor(getValues(rast)))) col <- c("grey", col) #TODO an experimental hack
+  if(min(zlim) == 0 & identical(getValues(rast), floor(getValues(rast))) & length(col) > 1) col[1] <- "grey" #TODO an experimental hack
+  
+
   
   if(is.null(shape)) plot(rast, zlim = zlim, col = col, ...) else
   {
@@ -57,7 +61,7 @@ plot_grid <- function(x, coords, col = rev(terrain.colors(64)), shape = NULL, sh
 }
 
 
-plot_points <- function(x, coords, col = rev(terrain.colors(64)), shape = NULL, shapefill = "grey", zlim= NULL,  zoom_to_points = FALSE, pch = 16, bg = par("bg"), ...)
+plot_points <- function(x, coords, col , shape = NULL, shapefill = "grey", zlim= NULL,  zoom_to_points = FALSE, pch = 16, bg = par("bg"), ...)
 {  
   if(inherits(x, "SpatialPointsDataFrame"))
   {
@@ -80,8 +84,14 @@ plot_points <- function(x, coords, col = rev(terrain.colors(64)), shape = NULL, 
     }
   }
 
+  if(missing(col)){
+    col <- choose.colors(x, zlim)
+    zlim <- attr(col, "zlim")
+  }
   
   if(is.null(zlim)) zlim <- c(min(x,na.rm = T),max(x,na.rm = T))
+  
+  
   coords <- SpatialPoints(coords)
 
   #split.screen( rbind(c(0, .8,0,1), c(.8,1,0,1)))
@@ -90,6 +100,12 @@ plot_points <- function(x, coords, col = rev(terrain.colors(64)), shape = NULL, 
   #par(plt = c(0,0.8,0,1))
   par(mar = c(5,4,4,6) + 0.1)
   
+  if(is.character(col))
+    if(length(col) == 1)
+      if(!substr(col, 1, 1) == "#")
+        if(!col %in% colors())
+          col <- custom_palette(col)
+    
   plotcol <- create.cols(x, col, zlim = zlim)
   if(pch %in% 21:25)
   {
@@ -120,7 +136,7 @@ plot_points <- function(x, coords, col = rev(terrain.colors(64)), shape = NULL, 
 }
 
 
-plot_nodes_phylo <- function(variable, tree, label = variable, main = deparse(substitute(variable)), zlim, col = rev(heat.colors(64)), show.legend = TRUE, sig.cutoff, nodes, roundoff= TRUE, show.tip.label = NULL, cex = NULL, ...)
+plot_nodes_phylo <- function(variable, tree, label = variable, main = deparse(substitute(variable)), zlim = NULL, col , show.legend = TRUE, sig.cutoff, nodes, roundoff= TRUE, show.tip.label = NULL, cex = NULL, ...)
 {
     if(!length(variable) == Nnode(tree))
     stop("The length of the variable vector must be the same length as the number of nodes on the tree")
@@ -130,7 +146,20 @@ plot_nodes_phylo <- function(variable, tree, label = variable, main = deparse(su
   plotvar <- variable
   if(roundoff & is.numeric(label)) label = round(label,2)
   
-  if(missing(zlim)) zlim <- c(min(plotvar, na.rm = T), max(plotvar, na.rm = T))
+
+  if(missing(col)){
+    col <- choose.colors(plotvar, zlim)
+    zlim <- attr(col, "zlim")
+  }
+  
+  if(is.character(col))
+    if(length(col) == 1)
+      if(!substr(col, 1, 1) == "#")
+        if(!col %in% colors())
+          col <- custom_palette(col)
+  
+  
+  if(is.null(zlim)) zlim <- c(min(plotvar, na.rm = T), max(plotvar, na.rm = T))
   
   if(is.null(cex)) cex <- par("cex")
   sizes <- cex * 4 * sqrt((plotvar - zlim[1])/zlim[2])
