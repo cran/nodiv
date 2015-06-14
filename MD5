@@ -1,9 +1,9 @@
-0b28fcff0d130390b1e90b75fa191c75 *DESCRIPTION
+92e9fa3ce7ac025a623a4fb1472bc6ef *DESCRIPTION
 043866b5f43c8677fc359fe63a9ad1e1 *NAMESPACE
 2d33d6ea74cdf0be6ecd406469959fab *R/Add_to_data_object.R
 d2321d4d100b8262f3cf814d722eb0d7 *R/General_figure_functions.R
 5404e5162246addd48de162c5a69f86e *R/Methods_for_data_objects.R
-51c9ccf0e0284c292e3a4b2f89033c19 *R/Methods_for_result_objects.R
+ef623f2d1816bf5629874cc418bd8816 *R/Methods_for_result_objects.R
 68af0f4d2c2b4774c2ec517d13462bf3 *R/Node_analysis_function.R
 f40c48afef4778f42801ff80832c0bba *R/Node_based_analysis.R
 b3e7698450fcbbde3160ac6baa39cd16 *R/Nodesig_function.R
@@ -22,7 +22,7 @@ ca9e8803c719c2e5d1adb336b49be5cc *man/add_shape.Rd
 7868d96a7e59c98c1ace2aa62549e679 *man/basal_node.Rd
 cf40f9194216f290ec28ce67a05f7e72 *man/coquettes.Rd
 e573a88c4ce32151f636167a22174cc2 *man/distrib_data.Rd
-e35739e21166e472afab755bb3f41a39 *man/nodiv-package.Rd
+7f50321acf06dd375b5fc2b4ccd866c8 *man/nodiv-package.Rd
 e0ace38935f63fb7d992baafb4144002 *man/occurrences.Rd
 91939e6ac3468a453d7ba484ac0fdc39 *man/plotSOS.Rd
 2e95a8560dfda5921d8230c4853b8ad1 *man/plot_nodes_phylo.Rd
