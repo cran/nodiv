@@ -1,13 +1,13 @@
-92e9fa3ce7ac025a623a4fb1472bc6ef *DESCRIPTION
-043866b5f43c8677fc359fe63a9ad1e1 *NAMESPACE
-2d33d6ea74cdf0be6ecd406469959fab *R/Add_to_data_object.R
+7787e265816f6de82e5653bbc45e5eed *DESCRIPTION
+f251d25df3e747272e8158cdae799fb9 *NAMESPACE
+f9eb201cbfbc90e6b2177d499d3ff2e7 *R/Add_to_data_object.R
 d2321d4d100b8262f3cf814d722eb0d7 *R/General_figure_functions.R
-5404e5162246addd48de162c5a69f86e *R/Methods_for_data_objects.R
+457c117dcfe49972b48cdda3a29fdb79 *R/Methods_for_data_objects.R
 ef623f2d1816bf5629874cc418bd8816 *R/Methods_for_result_objects.R
 68af0f4d2c2b4774c2ec517d13462bf3 *R/Node_analysis_function.R
-f40c48afef4778f42801ff80832c0bba *R/Node_based_analysis.R
+e16b777c29a1cf3a733efeb1ef90637f *R/Node_based_analysis.R
 b3e7698450fcbbde3160ac6baa39cd16 *R/Nodesig_function.R
-e4ad75a39ef11b599e10159611bf809c *R/Prepare_data.R
+2b1bd875311799d51789c80870abfa57 *R/Prepare_data.R
 e15302955eca0a9d318728cf91e7780c *R/Prepare_result_object.R
 1d42ce08f6cf2b85062033e00eb10ff3 *R/colors.R
 b57a51a57b621344b0a25c6ebe40937b *data/coquettes.rda
@@ -22,6 +22,7 @@ ca9e8803c719c2e5d1adb336b49be5cc *man/add_shape.Rd
 7868d96a7e59c98c1ace2aa62549e679 *man/basal_node.Rd
 cf40f9194216f290ec28ce67a05f7e72 *man/coquettes.Rd
 e573a88c4ce32151f636167a22174cc2 *man/distrib_data.Rd
+3e9d21a8e7c60bb6d483794bdcea8af6 *man/gridData.Rd
 7f50321acf06dd375b5fc2b4ccd866c8 *man/nodiv-package.Rd
 e0ace38935f63fb7d992baafb4144002 *man/occurrences.Rd
 91939e6ac3468a453d7ba484ac0fdc39 *man/plotSOS.Rd
@@ -31,4 +32,5 @@ ad58cc16d24d1417d7a48ed791555a80 *man/plot_richness.Rd
 ea53073811e30b16d634d92e49f11b7e *man/subsample.Rd
 9479ab0d564179ae32b706da7857dcf0 *man/update_object.Rd
 05bab1cce16b9a40da181b2a53f7919a *tests/testthat.R
-22580f66085df9b8b2d5fa3adcfa86a5 *tests/testthat/test_initial.R
+a6379b52bc15dc59ea4522418cee34e1 *tests/testthat/test_access.R
+da4414849fc0fa2fd2cbba7802f8a65b *tests/testthat/test_basic_functions.R

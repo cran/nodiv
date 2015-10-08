@@ -1,7 +1,7 @@
 Package: nodiv
 Type: Package
 Title: Compares the Distribution of Sister Clades Through a Phylogeny
-Version: 1.1.0
+Version: 1.1.1
 Date: 2015-06-14
 Author: Michael Krabbe Borregaard
 Maintainer: Michael Krabbe Borregaard <mkborregaard@snm.ku.dk>
@@ -10,7 +10,7 @@ Depends: R (>= 3.0)
 Imports: picante, raster, ape, sp, vegan, utils
 Suggests: RColorBrewer, parallel, testthat, colorspace
 License: GPL-3
-Packaged: 2015-06-14 11:08:33 UTC; michael
 NeedsCompilation: no
+Packaged: 2015-10-08 11:42:59 UTC; michael
 Repository: CRAN
-Date/Publication: 2015-06-14 15:28:00
+Date/Publication: 2015-10-08 13:55:31

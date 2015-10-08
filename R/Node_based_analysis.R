@@ -44,8 +44,8 @@ identify_node <- function(node, tree)
   }
   
   if(node %in% 1:Ntip(tree)){
-    node <- node + Ntip(tree)  #It is an open question whether this should be here, or whether it may just lead to errors.
     warning(paste("The node number",node,"did not exist. Adding Ntip(tree) to create a usable number"))
+    node <- node + Ntip(tree)  #It is an open question whether this should be here, or whether it may just lead to errors.
   }
   if(!node %in% nodenumbers(tree))
     stop("Undefined node")
@@ -163,11 +163,12 @@ Node_size <- function(nodiv_data, node = NULL)
 
 Node_species <- function(nodiv_data, node, names = TRUE)
 {
-  if(!inherits(nodiv_data, "nodiv_data"))
-    if(!inherits(nodiv_data, "phylo"))
-      stop("nodiv_data must be an object of type nodiv_data or phylo") else
-        return(Node_spec(nodiv_data, node, names))
-  
+  if(!inherits(nodiv_data, "nodiv_data")){
+    if(inherits(nodiv_data, "phylo")){
+      return(Node_spec(nodiv_data, node, names)) 
+    } else
+        stop("nodiv_data must be an object of type nodiv_data or phylo")  
+  }
   node <- identify_node(node, nodiv_data)
 
   ret <- which(nodiv_data$node_species[node-Nspecies(nodiv_data),] > 0)
