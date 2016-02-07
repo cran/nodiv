@@ -6,7 +6,7 @@
 # Here comes a list of functions to use for the analysis. These definitions should all be loaded into R
 
 
-plot_grid <- function(x, coords, col, shape = NULL, shapefill = "grey", zlim = NULL, zoom_to_points = FALSE, ...)
+plot_grid <- function(x, coords, col, shape = NULL, shapefill = "grey", shapeborder = NA, zlim = NULL, zoom_to_points = FALSE, legend = TRUE, gridcol, gridlwd, gridsites, overlay_shape = FALSE, ...)
 {
   if(inherits(x, "SpatialPixelsDataFrame"))
     rast <- raster(x) else
@@ -38,7 +38,17 @@ plot_grid <- function(x, coords, col, shape = NULL, shapefill = "grey", zlim = N
     zlim <- attr(col, "zlim")
   }
   
-  if(is.character(col))
+  if(is.character(col) & length(col) == 1){
+    if(col %in% c("auto", "ramp", "monochrome", "divergent", "individual")){
+      val <- getValues(rast)
+      if(col == "individual")
+        val <- as.factor(as.character(val))
+      col <- choose.colors(val, zlim, coltype = col)
+      zlim <- attr(col, "zlim")
+    }
+  }
+  
+    if(is.character(col))
     if(length(col) == 1)
       if(!substr(col, 1, 1) == "#")
         if(!col %in% colors())
@@ -49,25 +59,47 @@ plot_grid <- function(x, coords, col, shape = NULL, shapefill = "grey", zlim = N
   
 
   
-  if(is.null(shape)) plot(rast, zlim = zlim, col = col, ...) else
+  if(is.null(shape)) plot(rast, zlim = zlim, col = col, legend = legend, ...) else
   {
-    if(inherits(shape, "SpatialPolygonsDataFrame"))
-      border <- shapefill else border <- NULL
+    if(!inherits(shape, "SpatialPolygonsDataFrame"))
+      shapeborder <- NULL
     if(zoom_to_points){
       if(inherits(shape, "Raster"))
-        plot(shape, col = shapefill, border = border, xlim = bbox(coords)[1,], ylim = bbox(coords)[2,], legend = FALSE, ...) else 
-          plot(shape, col = shapefill, border = border, xlim = bbox(coords)[1,], ylim = bbox(coords)[2,], ...)
+        plot(shape, col = shapefill, border = shapeborder, xlim = bbox(coords)[1,], ylim = bbox(coords)[2,], legend = FALSE, ...) else 
+          plot(shape, col = shapefill, border = shapeborder, xlim = bbox(coords)[1,], ylim = bbox(coords)[2,], ...)
     } else {
       if(inherits(shape, "Raster"))
-        plot(shape, col = shapefill, border = border, legend = FALSE, ...) else plot(shape, col = shapefill, border = border, ...)
+        plot(shape, col = shapefill, border = shapeborder, legend = FALSE, ...) else plot(shape, col = shapefill, border = shapeborder, ...)
     }
-    plot(rast, add = T, zlim = zlim, col = col)
+    plot(rast, add = T, zlim = zlim, col = col, legend = legend)
   }
+  
+  if(!missing(gridcol) || !missing(gridlwd) || !missing(gridsites)){
+    if(missing(gridcol))
+      gridcol <- "lightgrey"
+    if(missing(gridlwd))
+      gridlwd <- 0.4
+    if(missing(gridsites))
+      gridsites <- 1:length(x)
+    add_grid(coords, sites = gridsites, border = gridcol, lwd = gridlwd)
+  }
+  
+  if(overlay_shape){
+    if(is.null(shape))
+      stop("No shape to overlay in the data set")
+    if(!inherits(shape, "SpatialPolygonsDataFrame"))
+      stop("Can only overlay objects of type SpatialPolygonsDataFrame")
+    if(is.na(shapeborder))
+      shapeborder = "white"
+    plot(shape, border = shapeborder, add = TRUE, lwd = 0.15, ...) 
+  }
+    
+  
   invisible(rast)
 }
 
 
-plot_points <- function(x, coords, col , shape = NULL, shapefill = "grey", zlim= NULL,  zoom_to_points = FALSE, pch = 16, bg = par("bg"), ...)
+plot_points <- function(x, coords, col , shape = NULL, shapefill = "grey", zlim= NULL,  zoom_to_points = FALSE, pch = 16, bg = par("bg"), legend = TRUE, ...)
 {  
   if(inherits(x, "SpatialPointsDataFrame"))
   {
@@ -102,6 +134,7 @@ plot_points <- function(x, coords, col , shape = NULL, shapefill = "grey", zlim=
 
   #split.screen( rbind(c(0, .8,0,1), c(.8,1,0,1)))
   #screen(1)
+  
   oldpar <- par()
   #par(plt = c(0,0.8,0,1))
   par(mar = c(5,4,4,6) + 0.1)
@@ -134,7 +167,8 @@ plot_points <- function(x, coords, col , shape = NULL, shapefill = "grey", zlim=
   #screen(2)
   par <- oldpar
 
-  add_legend(col = col, zlim = zlim)
+
+  if(legend)  add_legend(col = col, zlim = zlim)
   #image.plot( zlim = zlim,legend.only=TRUE, smallplot=c(.85,.87, .38,.65), col=col)
   ret <- data.frame(x)
   names(ret) <- deparse(substitute(x))
@@ -232,4 +266,33 @@ add_legend <- function (zlim, smallplot=c(.85,.866, .38,.65), col)
   par(new = FALSE, pty = old.par$pty, plt = old.par$plt, err = old.par$err)
   invisible()
 }
+
+add_grid <- function(coords, sites = 1:nrow(coords), border = "lightgrey", lwd = 0.4, ...){
+  if(inherits(coords, "SpatialPoints"))
+    coords <- coordinates(coords)
+  lon <- coords[,1]
+  lat <- coords[,2]	
+  cellsize_x <- min(abs(diff(unique(lon))))/2
+  cellsize_y <- min(abs(diff(unique(lat))))/2
+  lon <- lon[sites]
+  lat <- lat[sites]
+  rect(lon - cellsize_x, lat - cellsize_y, lon + cellsize_x, lat + cellsize_y, col = NA, border = border, lwd = lwd, ...)
+}
+
+phyplot <- function(x, type = "phylogram", use.edge.length = TRUE, node.pos = NULL, 
+          show.tip.label = TRUE, show.node.label = FALSE, edge.color = "black", 
+          edge.width = 1, edge.lty = 1, font = 3, cex = par("cex"), 
+          adj = NULL, srt = 0, no.margin = FALSE, root.edge = FALSE, 
+          label.offset = 0, underscore = FALSE, x.lim = NULL, y.lim = NULL, 
+          direction = "rightwards", lab4ut = NULL, tip.color = "black", 
+          plot = TRUE, rotate.tree = 0, open.angle = 0, node.depth = 1, 
+          align.tip.label = FALSE, ...) 
+  plot(x, type, use.edge.length, node.pos, 
+       show.tip.label, show.node.label, edge.color, 
+       edge.width, edge.lty, font, cex, 
+       adj, srt, no.margin, root.edge, 
+       label.offset, underscore, x.lim, y.lim, 
+       direction, lab4ut, tip.color, 
+       plot, rotate.tree, open.angle, node.depth, 
+       align.tip.label, ...) 
 
