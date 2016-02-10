@@ -9,7 +9,8 @@ coords <- function(distrib_data){
   if(!inherits(distrib_data, "distrib_data"))
     stop("object must be of class distrib_data")
   ret <- coordinates(distrib_data$coords)
-  colnames(ret) <- sites(distrib_data)
+  rownames(ret) <- sites(distrib_data)
+  ret
 }
 
 occurrences <- function(distrib_data, species, value = c("index", "names", "logical", "raw")){
