@@ -1,19 +1,103 @@
 
 
+plot_sitestat <- function(distrib_data, x, shape = NULL, type = c("auto", "points","grid"), ...)
+{
+  coords = NULL
+  type = match.arg(type)
+  if(inherits(distrib_data, "distrib_data"))
+  {
+    coords = distrib_data$coords
+    if(!is.null(distrib_data$shape)) {
+      if(is.null(shape))
+        shape <- distrib_data$shape else
+          warning("overriding the shape file associated with distrib_data")
+    }
+    
+    if(is.character(x))
+      if(length(x) == 1)
+        x <- sitestat(distrib_data, x) 
+      
+      if(type == "auto")
+        type <- distrib_data$type
+      if(!type == distrib_data$type)
+        warning(paste("Argument type has value",type,"but distrib_data is of type", distrib_data$type,"; this can cause problems or crashes"))
+      nsit = Nsites(distrib_data)
+  } 
+  
+  if(inherits(distrib_data, "SpatialPoints")){
+    coords <- distrib_data
+    nsit <- nrow(coordinates(coords))
+  }
+  
+  if(is.matrix(distrib_data))
+    distrib_data <- data.frame(distrib_data)
+  if(is.data.frame(distrib_data))
+    if(ncol(distrib_data) == 2){
+      coords <- distrib_data
+      nsit <- nrow(coords)
+    }
+  
+  if(is.null(coords))
+    stop("Wrong argument type for distrib_data - should be a distrib_data objects, spatial points or a two-column matrix of x and y values")
+  
+  if(type == "auto") type <- ifelse(isGrid(coords), "grid", "points")
+  
+  if(!length(x) == nsit)
+    stop(paste("x must be a numeric vector of length", nsit, "or the name of a site variable in distrib_data"))
+  
+  if(type == "grid")
+    plot_grid(x, coords, shape = shape, ...) else
+      plot_points(x, coords, shape = shape, ...)
+}
 
 
-##########################################################
-# Here comes a list of functions to use for the analysis. These definitions should all be loaded into R
+identify.distrib_data <- function(x, ...)
+  identify(coordinates(x$coords),  ...)
 
+plot.distrib_data <- function(x, ...)
+{
+  if(is.null(x$shape)) shape <- NULL else shape <- x$shape
+  if(x$type == "grid")
+    plot_grid(richness(x), x$coords, shape = shape, ...) else
+      plot_points(richness(x), x$coords, shape = shape, ...)
+}  
 
-plot_grid <- function(x, coords, col, shape = NULL, shapefill = "grey", shapeborder = NA, zlim = NULL, zoom_to_points = FALSE, legend = TRUE, gridcol, gridlwd, gridsites, overlay_shape = FALSE, ...)
+plot_richness <- function(distrib_data, ...)
+{
+  if(!inherits(distrib_data, "distrib_data"))
+    stop("argument must be an object of type distrib_data, nodiv_data or nodiv_results")
+  plot.distrib_data(distrib_data, ...)
+}
+
+plot_node <- function(nodiv_data, node = basal_node(nodiv_data), sites = NULL, ...)
+{
+  if(!inherits(nodiv_data, "nodiv_data"))
+    stop("argument must be an object of type nodiv_data or nodiv_result")
+  node <- identify_node(node, nodiv_data)
+  plot_richness(subsample.distrib_data(nodiv_data, species = Node_species(nodiv_data, node), sites = sites), ...)
+}
+
+plot.nodiv_data <- function(x,  ...)
+{
+  oldpar <- par()
+  par(mfrow = c(1,2))
+  plot.distrib_data(x, ...)
+  plot(x$phylo, show.tip.label = isTRUE(Nspecies(x) < 40), cex = 0.7) #need to specify explicitly which
+  
+  par(mfrow = c(1,1))
+}
+
+plot_grid <- function(x, coords, col, shape = NULL, shapefill = "grey", shapeborder = NA, zlim = NULL, zoom_to_points = FALSE, legend = TRUE, gridcol, gridlwd, gridsites, overlay_shape = FALSE, colscale = c("equal_interval", "quantiles"), legendlabels = NULL, ...)
 {
   if(inherits(x, "SpatialPixelsDataFrame"))
     rast <- raster(x) else
     if(missing(coords)) stop("coords must be defined if x is not a SpatialPixelsDataFrame") else
       if(inherits(coords, "SpatialPoints"))
       {
-        if(!isGrid(coords)) stop("this function is only suitable for gridded data")
+        if(!inherits(coords, "SpatialPixels"))
+          if(!isGrid(coords)) 
+            stop("this function is only suitable for gridded data")
+
         coords <- SpatialPoints(coords)
         suppressWarnings(rast <- raster(SpatialPixelsDataFrame( coords, as.data.frame(x)))) #TODO NB
       } else {
@@ -29,6 +113,16 @@ plot_grid <- function(x, coords, col, shape = NULL, shapefill = "grey", shapebor
           suppressWarnings(rast <- raster(SpatialPixelsDataFrame(coords, as.data.frame(x)))) #TODO NB
         } else stop("Undefined arguments")
       }
+
+  rawvalues <- getValues(rast)  
+  
+  if(!is.null(zlim))
+    realzlim <- zlim else
+      realzlim <- range(rawvalues, na.rm = T)
+    
+  colscale = match.arg(colscale)
+  if(colscale == "quantiles")
+      suppressWarnings(rast[!is.na(rast[])] <- rank(rast[!is.na(rast[])]))
   
   if(missing(col)){
     if(is.character(x)) x <- as.factor(x)
@@ -57,9 +151,19 @@ plot_grid <- function(x, coords, col, shape = NULL, shapefill = "grey", shapebor
   if(is.null(zlim)) zlim <- c(min(getValues(rast),na.rm = T),max(getValues(rast),na.rm = T))
   if(min(zlim) == 0 & identical(getValues(rast), floor(getValues(rast))) & length(col) > 1) col[1] <- "grey" #TODO an experimental hack
   
+  mylegend <- FALSE
+  if(colscale == "quantiles"){
+    if(legend)
+      par( plt = c(0.04,0.84,0.01,1), err = -1)
+    
+    mylegend <- legend
+    legend <-  FALSE
+    if(is.null(legendlabels))
+      legendlabels <- signif(quantile(rawvalues, (0:length(col))/length(col), na.rm = T), 3)
+  }
 
   
-  if(is.null(shape)) plot(rast, zlim = zlim, col = col, legend = legend, ...) else
+  if(is.null(shape)) plot(rast, zlim = zlim, col = col, legend = legend, axes = F, ...) else
   {
     if(!inherits(shape, "SpatialPolygonsDataFrame"))
       shapeborder <- NULL
@@ -69,7 +173,7 @@ plot_grid <- function(x, coords, col, shape = NULL, shapefill = "grey", shapebor
           plot(shape, col = shapefill, border = shapeborder, xlim = bbox(coords)[1,], ylim = bbox(coords)[2,], ...)
     } else {
       if(inherits(shape, "Raster"))
-        plot(shape, col = shapefill, border = shapeborder, legend = FALSE, ...) else plot(shape, col = shapefill, border = shapeborder, ...)
+        plot(shape, col = shapefill, border = shapeborder, legend = FALSE) else plot(shape, col = shapefill, border = shapeborder, ...)
     }
     plot(rast, add = T, zlim = zlim, col = col, legend = legend)
   }
@@ -93,9 +197,13 @@ plot_grid <- function(x, coords, col, shape = NULL, shapefill = "grey", shapebor
       shapeborder = "white"
     plot(shape, border = shapeborder, add = TRUE, lwd = 0.15, ...) 
   }
-    
   
-  invisible(rast)
+  if(mylegend) {
+    #par <- oldpar
+    add_legend(col = col, zlim = zlim, realzlim = realzlim, lab = legendlabels)
+  } 
+
+    invisible(rast)
 }
 
 
@@ -156,11 +264,11 @@ plot_points <- function(x, coords, col , shape = NULL, shapefill = "grey", zlim=
   
   if(is.null(shape)) plot(coords, col = plotcol, pch = pch, bg = bg, ...) else
   {
-    if(inherits(shape, "Raster")) legend <- FALSE else legend <- NULL
+    if(inherits(shape, "Raster")) loc_legend <- FALSE else loc_legend <- NULL
     if(inherits(shape, "SpatialPolygonsDataFrame"))
       border <- shapefill else border <- NULL
     if(zoom_to_points)
-      plot(shape, col = shapefill,  xlim = bbox(coords)[1,], ylim = bbox(coords)[2,], legend = legend, border = border, ...) else  plot(shape, col = shapefill, legend = legend, border = border, ...)
+      plot(shape, col = shapefill,  xlim = bbox(coords)[1,], ylim = bbox(coords)[2,], legend = loc_legend, border = border, ...) else  plot(shape, col = shapefill, legend = loc_legend, border = border, ...)
     plot(coords, col = plotcol, pch = pch, bg = bg, add = T)
   } 
 
@@ -240,8 +348,12 @@ plot_nodes_phylo <- function(variable, tree, label = variable, main = deparse(su
   }
 }
 
-add_legend <- function (zlim, smallplot=c(.85,.866, .38,.65), col)
+add_legend <- function (zlim, smallplot=c(.85,.866, .38,.65), col, realzlim, lab)
 {
+  if(!missing(lab))
+    realzlim <- range(lab)
+  if(missing(realzlim))
+    realzlim <- zlim
   old.par <- par()
   if ((smallplot[2] < smallplot[1]) | (smallplot[4] < smallplot[3])) {
     stop("plot region too small to add legend\n")
@@ -255,27 +367,37 @@ add_legend <- function (zlim, smallplot=c(.85,.866, .38,.65), col)
   midpoints <- seq(minz + binwidth/2, maxz - binwidth/2, by = binwidth)
   iy <- midpoints
   iz <- matrix(iy, nrow = 1, ncol = length(iy))
-  
   par(new = TRUE, pty = "m", plt = smallplot, err = -1)
   
-  axis.args <- list(side =  4, mgp = c(3, 1, 0), las = 2)
+
   image(ix, iy, iz, xaxt = "n", yaxt = "n", xlab = "", ylab = "", col = col)
   
-  do.call("axis", axis.args)
+      if(length(col) > 9){
+      axis.args <- list(side =  4, mgp = c(3, 1, 0), las = 2, label = NA) 
+      ats <- do.call("axis", axis.args)
+      lab <- signif((ats - min(zlim))/diff(zlim) * diff(realzlim) + min(realzlim), 3)
+      axis.args <- list(side =  4, mgp = c(3, 1, 0), las = 2, label = lab, at = ats)     
+      do.call("axis", axis.args)
+  
+    } else {
+      ats <- seq(zlim[1], zlim[2], length = length(col)+1)
+      if(missing(lab)) lab = signif((ats - min(zlim))/diff(zlim) * diff(realzlim) + min(realzlim), 2)
+      axis.args <- list(side =  4, mgp = c(3, 1, 0), las = 2, label = lab, at = ats) 
+      do.call("axis", axis.args)
+    }
+
   box()
   par(new = FALSE, pty = old.par$pty, plt = old.par$plt, err = old.par$err)
   invisible()
 }
 
 add_grid <- function(coords, sites = 1:nrow(coords), border = "lightgrey", lwd = 0.4, ...){
-  if(inherits(coords, "SpatialPoints"))
-    coords <- coordinates(coords)
-  lon <- coords[,1]
-  lat <- coords[,2]	
-  cellsize_x <- min(abs(diff(unique(lon))))/2
-  cellsize_y <- min(abs(diff(unique(lat))))/2
-  lon <- lon[sites]
-  lat <- lat[sites]
+  cd <- SpatialPixels(SpatialPoints(coords))[sites]
+  lon <- coordinates(cd)[,1]
+  lat <- coordinates(cd)[,2]	
+  cellsize_x <- cd@grid@cellsize[1]/2
+  cellsize_y <- cd@grid@cellsize[2]/2
+ 
   rect(lon - cellsize_x, lat - cellsize_y, lon + cellsize_x, lat + cellsize_y, col = NA, border = border, lwd = lwd, ...)
 }
 

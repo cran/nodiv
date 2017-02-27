@@ -25,7 +25,7 @@ nodiv_data <- function(phylo, commatrix, coords, proj4string_in = CRS(as.charact
   if(!is.null(dist_dat$node_stats))
     nodiv_dat$node_stats <- dist_dat$nodestats
   
-  cat("Comparing taxon names in phylogeny and communities (using picante)\n")
+  cat("Comparing taxon names in phylogeny and communities\n")
   
   colnames(dist_dat$comm) <- match_speciesnames(phylo$tip.label, colnames(dist_dat$comm), do_not_match = TRUE)
   nodiv_dat$species_stats$species <- colnames(dist_dat$comm)
@@ -73,7 +73,7 @@ distrib_data <- function(commatrix, coords = NULL, proj4string_in = CRS(as.chara
 {
   type = match.arg(type)
   cat("Checking input data\n")
-  if(inherits(commatrix, "distrib_data")){
+  if(inherits(commatrix, "distrib_data")){ # copy constructor
     if(is.null(commatrix$species_stats))
       stop("The distrib_data object is from an earlier version of nodiv. Please run update_object on the object before proceeding")
     
@@ -121,10 +121,15 @@ distrib_data <- function(commatrix, coords = NULL, proj4string_in = CRS(as.chara
     commatrix[,3] <- as.character(commatrix[,3])
     commatrix <- sample2matrix(commatrix)   
   }
-
+  
   if(is.data.frame(commatrix)) commatrix <- as.matrix(commatrix)
-  if(!is.matrix(commatrix)) stop("commatrix must be a matrix of 0's and 1's, indicating presence or absence")
+  if(!is.matrix(commatrix)) stop("commatrix must be an integer matrix")
   if(!is.numeric(commatrix)) stop("commatrix must be a numeric matrix of 0's and 1's, indicating presence or absence")
+  if(sum(is.na(as.numeric(commatrix))) > 0){
+    kk = which(is.na(as.numeric(commatrix)))
+    warning(paste(length(kk),"NA values in the presence-absence matrix was replaced by 0s"))
+    commatrix[kk] <- 0
+  }
   if(!sum(!unique(as.numeric(commatrix)) %in% 0:1) == 0) stop("commatrix must be a matrix of 0's and 1's, indicating presence or absence")
   
   temp <- floor(commatrix) #this is currently not necessary, due to the previous line
@@ -134,7 +139,7 @@ distrib_data <- function(commatrix, coords = NULL, proj4string_in = CRS(as.chara
   if(is.matrix(coords)) coords <- as.data.frame(coords)
   cat("Transforming coords to spatial points\n")
   if(is.data.frame(coords)) coords <- toSpatialPoints(coords,proj4string_in, commatrix, type)
-
+  
   if(class(coords) == "SpatialPixelsDataFrame") type <- "grid" else if (class(coords) == "SpatialPointsDataFrame") type <- "points" else stop("coords must be a data.frame of coordinates or an sp data.frame object")
   
 
@@ -148,14 +153,14 @@ distrib_data <- function(commatrix, coords = NULL, proj4string_in = CRS(as.chara
   
   if(length(not.occupied.sites) > 0)
   {
-    message(paste(length(not.occupied.sites), "sites where dropped because no species occupied them:\n", paste(coords$sites[not.occupied.sites], collapse = "\t")))
+    message(paste(length(not.occupied.sites), "sites were dropped because no species occupied them:\n", paste(coords$sites[not.occupied.sites], collapse = "\t")))
     coords <- coords[ - not.occupied.sites, ]
     commatrix <- commatrix[ - not.occupied.sites,  ]
   }
   
   if(length(not.occurring.species) > 0)
   {
-    message(paste(length(not.occurring.species), "species where dropped because of 0 occurrences in the areas defined by coords:\n", paste(colnames(commatrix)[not.occurring.species], collapse = "\t")))
+    message(paste(length(not.occurring.species), "species were dropped because of 0 occurrences in the areas defined by coords:\n", paste(colnames(commatrix)[not.occurring.species], collapse = "\t")))
     commatrix <- commatrix[, - not.occurring.species]
   }
   
@@ -210,7 +215,7 @@ match_commat_coords <- function(commatrix, sitenames)
 }
 
 
-toSpatialPoints <- function(coords, proj4string, commatrix, type)
+toSpatialPoints <- function(coords, proj4string_in, commatrix, type)
 {
   
     xcol <- 0
@@ -235,12 +240,20 @@ toSpatialPoints <- function(coords, proj4string, commatrix, type)
     
     cat("Identifying sites identifier\n")
     
-    if (ncol(coords)==3 & !(xcol + ycol == 0) & isTRUE(all.equal(coords[,-c(xcol, ycol)], unique(coords[,-c(xcol, ycol)])))) names(coords)[!names(coords) %in% c("myX", "myY")] <- "sites" else 
+    # Are there three columns, and has the two of them been identified as X and Y?
+    if (ncol(coords)==3 & !(xcol + ycol == 0) & isTRUE(all.equal(coords[,-c(xcol, ycol)], unique(coords[,-c(xcol, ycol)])))) 
+      names(coords)[!names(coords) %in% c("myX", "myY")] <- "sites" else 
+      # or are there two columns and the same number of rows as commatrix
       if(nrow(coords) == nrow(commatrix) & !is.null(rownames(commatrix)) & ncol(coords) == 2){
+        # if there are no rownames on coords we just assume they are sorted correctly
         if(is.null(rownames(coords)) | identical(rownames(coords), as.character(1:nrow(coords))))
           coords = data.frame(sites = rownames(commatrix)) else 
-            if (!identical(rownames(commatrix), rownames(coords))) stop("Because the rownames of commatrix and coords differ, sitenames cannot be established unless they are included explicitly as a third column of coords")
+            # if there are rownames on coords and they are the same as commatrix 
+            if (identical(sort(rownames(commatrix)), sort(rownames(coords)))) 
+              coords$sites <- rownames(coords) else
+              stop("Because the rownames of commatrix and coords differ, sitenames cannot be established unless they are included explicitly as a third column of coords")
       }  else {
+      # or are there more than three columns, then we will match the rownames of commatrix to the columns of coords to find the one holding sites
         if(is.null(rownames(commatrix))){
           stop("There must be valid site names in the rownames of commatrix or in the coords data")
         } else {
@@ -256,7 +269,7 @@ toSpatialPoints <- function(coords, proj4string, commatrix, type)
     xy <- coords[, ids]    
     if(!ncol(xy) == 2) stop("coords should be a data.frame or spatial data.frame with 2 columns, giving the x/longitude, and y/latitude of all sites")
     
-    xy <- SpatialPoints(xy, proj4string)
+    xy <- SpatialPoints(xy, proj4string_in)
     type_auto <- ifelse(isGrid(xy), "grid", "points")
     
     if(type == "auto") type <- type_auto else 
@@ -273,7 +286,9 @@ toSpatialPoints <- function(coords, proj4string, commatrix, type)
 }
 
 isGrid <- function(coords)
-  return(isGridVar(coordinates(coords)[,1]) & isGridVar(coordinates(coords)[,2]))
+  tryCatch({ kk = points2grid(SpatialPoints(coordinates(coords))); TRUE}, error = function(e) FALSE)
+#isGrid <- function(coords)
+ # return(isGridVar(coordinates(coords)[,1]) & isGridVar(coordinates(coords)[,2]))
 
 isGridVar <- function(gridVar)
 {
