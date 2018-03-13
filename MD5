@@ -1,7 +1,7 @@
-c4a6befdab39ca49fa38121b36f3522b *DESCRIPTION
+6cf5de2abc35979b653c74f2028af341 *DESCRIPTION
 ecca06148248aa5878aee66b1fc5f9cb *LICENSE
 2083ac9e962522e3ad9ee5877b5970f6 *NAMESPACE
-8558834a8479d055c2889a9d00f91a30 *R/Add_to_data_object.R
+4df99438cfd2320a70a11415738e73d9 *R/Add_to_data_object.R
 cf49fb30b7a3f099ca38265d76c7cd17 *R/General_figure_functions.R
 8fb0f5b9e4dbcf66446b0ce4529b278c *R/Methods_for_data_objects.R
 ef623f2d1816bf5629874cc418bd8816 *R/Methods_for_result_objects.R
@@ -26,7 +26,7 @@ ca9e8803c719c2e5d1adb336b49be5cc *man/add_shape.Rd
 cf40f9194216f290ec28ce67a05f7e72 *man/coquettes.Rd
 e573a88c4ce32151f636167a22174cc2 *man/distrib_data.Rd
 3e9d21a8e7c60bb6d483794bdcea8af6 *man/gridData.Rd
-aa5a273d5b9c0c22f95195aeff18e339 *man/nodiv-package.Rd
+794806f3f53664f27a9c240f523d97a1 *man/nodiv-package.Rd
 e0ace38935f63fb7d992baafb4144002 *man/occurrences.Rd
 01877a00749c3f0b12fba532d4b2d14b *man/phyplot.Rd
 91939e6ac3468a453d7ba484ac0fdc39 *man/plotSOS.Rd
