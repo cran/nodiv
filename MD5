@@ -1,15 +1,15 @@
-0ff8ca330eae8325daf00bfe41804683 *DESCRIPTION
+10b502443c5db838d90f3289bb0dbd1c *DESCRIPTION
 ecca06148248aa5878aee66b1fc5f9cb *LICENSE
-fb42084a89f8b3f69024c70b49ecfa7d *NAMESPACE
+8d0dd92ca9ad28acacdaf68033334304 *NAMESPACE
 4df99438cfd2320a70a11415738e73d9 *R/Add_to_data_object.R
 cf49fb30b7a3f099ca38265d76c7cd17 *R/General_figure_functions.R
 8fb0f5b9e4dbcf66446b0ce4529b278c *R/Methods_for_data_objects.R
-ef623f2d1816bf5629874cc418bd8816 *R/Methods_for_result_objects.R
+26c172cf16a77dd636e1d697dffa340d *R/Methods_for_result_objects.R
 68af0f4d2c2b4774c2ec517d13462bf3 *R/Node_analysis_function.R
 dd9a23320e7f24ba64adfcc284fc80bf *R/Node_based_analysis.R
 ba983b99dab04f9695a802acacd98e0d *R/Nodesig_function.R
 263e5a54081328d32cd934945b3a4701 *R/Prepare_data.R
-e15302955eca0a9d318728cf91e7780c *R/Prepare_result_object.R
+ba6f34557b48f94de63976e59b86f419 *R/Prepare_result_object.R
 4f84efc0706ad685a843a349bd8279dd *R/colors.R
 d760b8aed53d26999e9696413d449912 *R/two_color_map.R
 d395d0faf0a1baa8bb302451ec83f7a0 *README.md
@@ -26,7 +26,7 @@ ca9e8803c719c2e5d1adb336b49be5cc *man/add_shape.Rd
 cf40f9194216f290ec28ce67a05f7e72 *man/coquettes.Rd
 e573a88c4ce32151f636167a22174cc2 *man/distrib_data.Rd
 3e9d21a8e7c60bb6d483794bdcea8af6 *man/gridData.Rd
-14986dfe7e66073fd6353add77b47f7e *man/nodiv-package.Rd
+6c91215082d91051de37ceecaff98868 *man/nodiv-package.Rd
 e0ace38935f63fb7d992baafb4144002 *man/occurrences.Rd
 01877a00749c3f0b12fba532d4b2d14b *man/phyplot.Rd
 91939e6ac3468a453d7ba484ac0fdc39 *man/plotSOS.Rd
@@ -37,5 +37,7 @@ ea53073811e30b16d634d92e49f11b7e *man/subsample.Rd
 8ba433b38fee7fa322289fcdd5cb2a8d *man/two_color_map.Rd
 9479ab0d564179ae32b706da7857dcf0 *man/update_object.Rd
 05bab1cce16b9a40da181b2a53f7919a *tests/testthat.R
-a6379b52bc15dc59ea4522418cee34e1 *tests/testthat/test_access.R
+f63bebf2d610688c3e2e3713c9dc9f61 *tests/testthat/test_access.R
+4739e1af488a24b1127720e9b01f4f04 *tests/testthat/test_adding.R
 da4414849fc0fa2fd2cbba7802f8a65b *tests/testthat/test_basic_functions.R
+b0c857c526966248b696cc4a62b981cf *tests/testthat/test_node_analysis.R
