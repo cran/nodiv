@@ -34,9 +34,11 @@ Michael Krabbe Borregaard
 \code{\link{distrib_data}}
 }
 \examples{
-## usage: data <- add_shape(data, shapefile)
+  # remove the shapefile from coquettes
+  data(coquettes)
+  sh <- coquettes$shape
+  coquettes$shape <- NULL
+  # and add it back in
+  coquettes <- add_shape(coquettes, sh)
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+
