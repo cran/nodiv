@@ -1,4 +1,4 @@
-20833853f342f509771133f14ff42727 *DESCRIPTION
+7de3830dde97e5f0082916eb4fcb4156 *DESCRIPTION
 ecca06148248aa5878aee66b1fc5f9cb *LICENSE
 8d0dd92ca9ad28acacdaf68033334304 *NAMESPACE
 22a27d47bbf8eb7a357aaac4384caa87 *R/Add_to_data_object.R
@@ -26,7 +26,7 @@ bd8ebf430ee2f20ca84bf59ba31d1b5b *man/Node_size.Rd
 cf40f9194216f290ec28ce67a05f7e72 *man/coquettes.Rd
 f369f0efce386b66412b3e9ed092c978 *man/distrib_data.Rd
 7c130dadaa07ab22aa66ed84bc872f47 *man/gridData.Rd
-00beca2cfefab6fcdc908598a7df12d9 *man/nodiv-package.Rd
+63f3d9678cf2c9c9dd179afd0f1d5b4a *man/nodiv-package.Rd
 c24eed158d7cda168e879836ea53fbc5 *man/occurrences.Rd
 01877a00749c3f0b12fba532d4b2d14b *man/phyplot.Rd
 0729b493b2b9d8e1611f05f12c274ede *man/plotSOS.Rd
