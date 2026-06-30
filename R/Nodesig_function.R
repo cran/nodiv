@@ -54,7 +54,7 @@ rdtable_nodesig <- function(simcom, Node_sp, repeats, show )
 
 ### EXPORTED FUNCTIONS ########
 
-Nodesig <- function(nodiv_data, Node_sp = NULL, repeats = 100, method = c("rdtable", "quasiswap"), show = T)
+Nodesig <- function(nodiv_data, Node_sp = NULL, repeats = 100, method = c("rdtable", "quasiswap"), show = TRUE)
 {
   if (!inherits(nodiv_data, "distrib_data"))
     stop("nodiv_data must be an object of type nodiv_data or distrib_data")

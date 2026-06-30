@@ -59,7 +59,7 @@ dist_to_highest <- function(vec1, vec2){
   sqrt((1-vec1)^2 + (1-vec2)^2)
 }
 
-two_color_map <- function(distrib_data, vec1, vec2, res = 10, showlegend = T, legend_coords = c(0.2, 0.26, 0.36, 0.44), type = c("auto", "grid", "points"), colour = c("green_purple", "green_red_purple_cyan"), ...){
+two_color_map <- function(distrib_data, vec1, vec2, res = 10, showlegend = TRUE, legend_coords = c(0.2, 0.26, 0.36, 0.44), type = c("auto", "grid", "points"), colour = c("green_purple", "green_red_purple_cyan"), ...){
   colour <- match.arg(colour)
   retcol <- assign_col(vec1, vec2, res, colour)
   
